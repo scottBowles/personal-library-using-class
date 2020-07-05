@@ -8,6 +8,29 @@ const pagesField = document.querySelector("#pages");
 const readField = document.querySelector("#read");
 const notYetReadField = document.querySelector("#notyetread");
 
+class Book {
+  constructor({ title, author, pages, read }) {
+    this.title = title;
+    this.author = author;
+    this.pages = pages;
+    this.read = read;
+  }
+
+  get info() {
+    return `${title} by ${author}, ${pages} pages, ${
+      this.read ? "read" : "not read yet"
+    }`;
+  }
+
+  get readDisplay() {
+    return this.read ? "Read" : "Not yet read";
+  }
+
+  toggleRead() {
+    this.read = this.read ? false : true;
+  }
+}
+
 // Check whether localStorage is supported and available
 function storageAvailable(type) {
   var storage;
@@ -47,26 +70,28 @@ if (localStorageAvailable && localStorage.getItem("myLibrary")) {
   });
 }
 
-function Book({ title, author, pages, read }) {
-  this.title = title;
-  this.author = author;
-  this.pages = pages;
-  this.read = read;
-}
+// OLD NON-CLASS-BASED BELOW
 
-Book.prototype.info = function () {
-  return `${title} by ${author}, ${pages} pages, ${
-    this.read ? "read" : "not read yet"
-  }`;
-};
+// function Book({ title, author, pages, read }) {
+//   this.title = title;
+//   this.author = author;
+//   this.pages = pages;
+//   this.read = read;
+// }
 
-Book.prototype.getReadDisplay = function () {
-  return this.read ? "Read" : "Not yet read";
-};
+// Book.prototype.info = function () {
+//   return `${title} by ${author}, ${pages} pages, ${
+//     this.read ? "read" : "not read yet"
+//   }`;
+// };
 
-Book.prototype.toggleRead = function () {
-  this.read = this.read ? false : true;
-};
+// Book.prototype.getReadDisplay = function () {
+//   return this.read ? "Read" : "Not yet read";
+// };
+
+// Book.prototype.toggleRead = function () {
+//   this.read = this.read ? false : true;
+// };
 
 function addBookToLibrary(newBook) {
   myLibrary.push(newBook);
@@ -81,12 +106,30 @@ function createNewRow() {
 }
 
 function addPropertiesToRow(book, row) {
-  const bookProperties = ["title", "author", "pages", "read"];
-  bookProperties.forEach((property) => {
+  Object.keys(book).forEach((property) => {
     const newCell = document.createElement("td");
     newCell.textContent =
-      property !== "read" ? book[property] : book.getReadDisplay();
+      property !== "read" ? book[property] : book.readDisplay;
     row.appendChild(newCell);
+  });
+}
+
+function addReadToggleButtonToRow(book, row) {
+  const newCell = document.createElement("td");
+  row.appendChild(newCell);
+  const toggleReadButton = document.createElement("button");
+  toggleReadButton.textContent = book.read ? "Mark Unread" : "Mark Read";
+  newCell.appendChild(toggleReadButton);
+
+  toggleReadButton.addEventListener("click", () => {
+    const readCell = [...row.children].find(
+      (el) => el.textContent === book.readDisplay
+    );
+    book.toggleRead();
+    readCell.textContent = book.readDisplay;
+    toggleReadButton.textContent = book.read ? "Mark Unread" : "Mark Read";
+    if (localStorageAvailable)
+      localStorage.setItem("myLibrary", JSON.stringify(myLibrary));
   });
 }
 
@@ -104,25 +147,6 @@ function addRemoveButtonToRow(book, row) {
       localStorage.setItem("myLibrary", JSON.stringify(myLibrary));
     row.remove();
     if (myLibrary.length === 0) table.classList.add("hidden");
-  });
-}
-
-function addReadToggleButtonToRow(book, row) {
-  const newCell = document.createElement("td");
-  row.appendChild(newCell);
-  const toggleReadButton = document.createElement("button");
-  toggleReadButton.textContent = book.read ? "Mark Unread" : "Mark Read";
-  newCell.appendChild(toggleReadButton);
-
-  toggleReadButton.addEventListener("click", () => {
-    const readCell = [...row.children].find(
-      (e) => e.textContent === book.getReadDisplay()
-    );
-    book.toggleRead();
-    if (localStorageAvailable)
-      localStorage.setItem("myLibrary", JSON.stringify(myLibrary));
-    readCell.textContent = book.getReadDisplay();
-    toggleReadButton.textContent = book.read ? "Mark Unread" : "Mark Read";
   });
 }
 
@@ -173,7 +197,7 @@ addBook.addEventListener("click", (e) => {
   clearForm();
 });
 
-// // Populate myLibrary to test
+// Populate myLibrary to test
 // const LOTR = new Book({
 //   title: "LOTR",
 //   author: "Tolkien",
